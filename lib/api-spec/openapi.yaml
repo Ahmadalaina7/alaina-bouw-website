@@ -1,0 +1,149 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: leads
+    description: Quote request submission
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /leads:
+    post:
+      operationId: createLead
+      tags: [leads]
+      summary: Submit a quote request
+      description: Validates and stores a quote request for Alaina Bouw.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadInput"
+      responses:
+        "201":
+          description: Quote request stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadCreated"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    LeadInput:
+      type: object
+      additionalProperties: false
+      properties:
+        service:
+          type: string
+          minLength: 1
+          maxLength: 80
+        description:
+          type: string
+          minLength: 10
+          maxLength: 4000
+        timeline:
+          type: string
+          enum: [asap, within_month, one_to_three_months, three_to_six_months, exploring]
+        postalCode:
+          type: string
+          minLength: 4
+          maxLength: 10
+        city:
+          type: string
+          minLength: 2
+          maxLength: 100
+        budget:
+          type: string
+          enum: [under_2500, 2500_5000, 5000_10000, 10000_25000, over_25000, undecided]
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        phone:
+          type: string
+          minLength: 6
+          maxLength: 40
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        contactPreference:
+          type: string
+          enum: [phone, email, whatsapp]
+        privacyConsent:
+          type: boolean
+          enum: [true]
+        website:
+          type: string
+          maxLength: 200
+        utmSource:
+          type: string
+          maxLength: 200
+        utmMedium:
+          type: string
+          maxLength: 200
+        utmCampaign:
+          type: string
+          maxLength: 200
+      required:
+        - service
+        - description
+        - timeline
+        - city
+        - name
+        - phone
+        - email
+        - contactPreference
+        - privacyConsent
+    LeadCreated:
+      type: object
+      properties:
+        reference:
+          type: string
+      required:
+        - reference
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Alaina Bouw Klusbedrijf"
+description = "Een professionele Nederlandstalige website voor Alaina Bouw Klusbedrijf met meerdere pagina’s voor diensten, projecten, werkwijze, werkgebied, contact en offerteaanvragen."
+version = "1.0.0"
+id = "artifacts/alaina-bouw-website"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20400
+
+[services.development]
+run = "pnpm --filter @workspace/alaina-bouw-website run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/alaina-bouw-website", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/alaina-bouw-website/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20400"
+BASE_PATH = "/"

@@ -1,0 +1,9 @@
+{
+  "name": "Alaina Bouw Klusbedrijf",
+  "short_name": "Alaina Bouw",
+  "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }],
+  "theme_color": "#a90f14",
+  "background_color": "#faf8f5",
+  "display": "standalone",
+  "start_url": "/"
+}
