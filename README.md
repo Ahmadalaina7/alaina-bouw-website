@@ -45,23 +45,24 @@ Het formulier verstuurt naar `/api/leads`. Start daarvoor `@workspace/api-server
 `PORT` en `DATABASE_URL`. Optioneel stuurt `LEAD_WEBHOOK_URL` (https) elke aanvraag door,
 bijvoorbeeld naar e-mail of een automatiseringstool.
 
-## Publiceren op Cloud86
+## Publiceren op Plesk
 
-De GitHub-repository bevat de broncode; upload niet de repository zelf naar de webserver.
-Maak eerst lokaal de productieversie:
+De GitHub-repository bevat de broncode. Een buildworkflow maakt bij elke push naar `main`
+een uploadklare ZIP:
 
-```bash
-pnpm install
-pnpm --filter @workspace/alaina-bouw-website run build
-```
+1. Open **Actions → Build website** in GitHub en wacht tot de workflow klaar is.
+2. Download het artifact `alaina-bouw-plesk-website` en pak de ZIP uit.
+3. Open in Plesk **Bestanden** voor je domein en ga naar de document root (meestal
+   `httpdocs`).
+4. Upload de inhoud van de ZIP rechtstreeks naar die map. `index.html`, `assets/`,
+   `project-photos/` en `.htaccess` moeten direct in de document root staan.
 
-Upload daarna **de inhoud** van `artifacts/alaina-bouw-website/dist/public` naar de
-documentroot van het domein in Cloud86 (bij DirectAdmin is dat doorgaans
-`domains/<jouwdomein>/public_html`). De map bevat onder andere `index.html`, `assets/`
-en `.htaccess`. Zet de bestanden zelf in de documentroot, niet de map `dist/public`.
+De `.htaccess`-regel stuurt directe bezoeken aan app-pagina's zoals `/diensten` door naar
+de React-app. Als Plesk nginx gebruikt zonder Apache `.htaccess`-ondersteuning, stel dan
+een SPA-fallback naar `/index.html` in bij de hostinginstellingen.
 
-Het `.htaccess`-bestand zorgt dat directe bezoeken aan app-pagina's zoals `/diensten`
-naar de React-app worden doorgestuurd. De offerteaanvraag wordt niet door deze statische
-website opgeslagen: daarvoor moet ook de API-server draaien en moet `/api` naar die server
-worden doorgestuurd. Zonder die backend kan de website wel worden bekeken, maar werkt het
-versturen van offerteaanvragen niet.
+De statische site en foto's worden met dit artifact meegeleverd. Het offerteformulier
+vereist daarnaast een draaiende API-server en database; de backendcode staat in
+`artifacts/api-server` en het databaseschema in `lib/db`. De websitebuild alleen start die
+server niet. Configureer daarom ook een backend en routeer `/api` ernaartoe voordat je
+offerteaanvragen live gebruikt.

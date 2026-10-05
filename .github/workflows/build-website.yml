@@ -1,0 +1,47 @@
+name: Build website
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.9.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build static website
+        run: pnpm --filter @workspace/alaina-bouw-website run build
+
+      - name: Package website for Plesk
+        run: |
+          cd artifacts/alaina-bouw-website/dist/public
+          zip -r "$GITHUB_WORKSPACE/alaina-bouw-plesk-upload.zip" .
+
+      - name: Upload deployable website
+        uses: actions/upload-artifact@v4
+        with:
+          name: alaina-bouw-plesk-website
+          path: alaina-bouw-plesk-upload.zip
+          if-no-files-found: error
+          retention-days: 14
