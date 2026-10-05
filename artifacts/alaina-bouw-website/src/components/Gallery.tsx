@@ -6,42 +6,82 @@ import { cn } from '@/lib/utils';
 
 export function Gallery({ photos, className }: { photos: ProjectPhoto[]; className?: string }) {
   const [active, setActive] = useState<number | null>(null);
+  const carouselRef = useRef<HTMLUListElement>(null);
+
+  const scrollCarousel = (direction: -1 | 1) => {
+    const carousel = carouselRef.current;
+    const firstSlide = carousel?.querySelector('li');
+    if (!carousel || !firstSlide) return;
+
+    const gap = Number.parseFloat(getComputedStyle(carousel).columnGap) || 0;
+    carousel.scrollBy({
+      left: (firstSlide.getBoundingClientRect().width + gap) * direction,
+      behavior: 'smooth',
+    });
+  };
 
   return (
     <>
-      <ul className={cn('columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4', className)}>
-        {photos.map((photo, i) => (
-          <motion.li
-            key={photo.src}
-            layout
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35 }}
-            className="mb-3 break-inside-avoid sm:mb-4"
-          >
+      <section aria-label="Projectfoto's" className={cn('relative', className)}>
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <p className="text-sm text-stone">{photos.length} foto's</p>
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setActive(i)}
-              className="group relative block w-full cursor-zoom-in overflow-hidden rounded-xl bg-sand text-left"
-              aria-label={`Vergroot foto: ${photo.caption}`}
+              onClick={() => scrollCarousel(-1)}
+              className="grid size-11 place-items-center rounded-full border border-line bg-white text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white"
+              aria-label="Vorige projectfoto's"
             >
-              <img
-                src={photo.src}
-                alt={photo.alt}
-                width={photo.width}
-                height={photo.height}
-                loading="lazy"
-                decoding="async"
-                className="w-full transition-transform duration-700 group-hover:scale-[1.04]"
-              />
-              <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3 pt-10 text-sm font-medium text-white sm:p-4">
-                <span className="leading-snug">{photo.caption}</span>
-                <Expand className="size-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
-              </span>
+              <ChevronLeft className="size-5" />
             </button>
-          </motion.li>
-        ))}
-      </ul>
+            <button
+              type="button"
+              onClick={() => scrollCarousel(1)}
+              className="grid size-11 place-items-center rounded-full border border-line bg-white text-ink transition-colors hover:border-ink hover:bg-ink hover:text-white"
+              aria-label="Volgende projectfoto's"
+            >
+              <ChevronRight className="size-5" />
+            </button>
+          </div>
+        </div>
+        <ul
+          ref={carouselRef}
+          className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] sm:gap-4 [&::-webkit-scrollbar]:hidden"
+          aria-label="Projectfoto's; veeg of gebruik de knoppen om meer foto's te bekijken"
+        >
+          {photos.map((photo, i) => (
+            <motion.li
+              key={photo.src}
+              layout
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.35 }}
+              className="w-[85%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]"
+            >
+              <button
+                type="button"
+                onClick={() => setActive(i)}
+                className="group relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-2xl bg-sand text-left"
+                aria-label={`Vergroot foto: ${photo.caption}`}
+              >
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  width={photo.width}
+                  height={photo.height}
+                  loading="lazy"
+                  decoding="async"
+                  className="size-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                />
+                <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3 pt-10 text-sm font-medium text-white sm:p-4">
+                  <span className="leading-snug">{photo.caption}</span>
+                  <Expand className="size-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                </span>
+              </button>
+            </motion.li>
+          ))}
+        </ul>
+      </section>
       <Lightbox photos={photos} index={active} onChange={setActive} />
     </>
   );
