@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- .htaccess apple-touch-icon.png favicon-32.png icon-512.png index.html og-image.jpg project-photos robots.txt site.webmanifest assets
+          git add -- .htaccess apple-touch-icon.png favicon-32.png icon-512.png index.html logo-mark.png og-image.jpg project-photos robots.txt site.webmanifest assets
           if ! git diff --cached --quiet; then
             git commit -m "Update generated Plesk website"
             git push

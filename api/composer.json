@@ -1,0 +1,8 @@
+{
+  "name": "alaina-bouw/cloud86-form-handler",
+  "description": "PHP form email handler for Alaina Bouw on Cloud86",
+  "license": "MIT",
+  "require": {
+    "phpmailer/phpmailer": "^6.10"
+  }
+}

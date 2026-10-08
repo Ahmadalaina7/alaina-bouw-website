@@ -5,7 +5,8 @@ pnpm-workspace met de website, de API voor het aanvraagformulier en gedeelde lib
 | Map | Inhoud |
 | --- | --- |
 | `artifacts/alaina-bouw-website` | Website (React + Vite + Tailwind CSS) |
-| `artifacts/api-server` | API die offerteaanvragen opslaat (`POST /api/leads`) |
+| `api` | PHP-mailendpoint voor de Cloud86/Plesk-deployment (`POST /api/leads`) |
+| `artifacts/api-server` | Optionele Node.js API voor lokale/andere deployments |
 | `lib/db` | Databaseschema (PostgreSQL, Drizzle) |
 | `lib/api-spec`, `lib/api-zod`, `lib/api-client-react` | OpenAPI-specificatie en gegenereerde client/validatie |
 
@@ -26,26 +27,29 @@ Diensten, projectfoto's en de werkwijze staan in hetzelfde bestand.
 pnpm install
 pnpm --filter @workspace/alaina-bouw-website run dev      # website op http://localhost:5173
 
-# Voor het formulier: API + database (de website stuurt /api door naar poort 8080)
+# Optionele Node.js API voor lokaal ontwikkelen (database nodig)
 DATABASE_URL=postgres://... pnpm --filter @workspace/db run push-force
 DATABASE_URL=postgres://... PORT=8080 pnpm --filter @workspace/api-server run dev
 ```
 
-### E-mail voor offerteaanvragen
+### E-mail voor offerteaanvragen op Cloud86
 
-De API stuurt elke aanvraag naar `info@alainabouw.nl` en stuurt de aanvrager een
-ontvangstbevestiging met het bedrijfslogo. De Cloud86-server en SSL-poort zijn al als
-standaard ingesteld. Configureer op de API-host:
+De PHP-handler stuurt elke aanvraag naar `info@alainabouw.nl` en stuurt de aanvrager een
+ontvangstbevestiging met het bedrijfslogo. Er is geen Formspree-account, Node.js-app of
+database nodig op Cloud86. PHPMailer is opgenomen in `api/vendor`.
 
-- `SMTP_HOST`: optioneel; standaard `shared225.cloud86-host.io`
-- `SMTP_PORT`: optioneel; standaard `465` (SSL; poort 587 kan met STARTTLS)
-- `SMTP_USER`: `info@alainabouw.nl`
-- `SMTP_PASS`: mailboxwachtwoord of app-wachtwoord
-- `SMTP_SECURE`: optioneel; standaard `true` bij poort 465, anders `false`
+1. Controleer in Plesk bij **Websites & Domains → PHP Settings** dat PHP 8.1 of hoger actief is
+   en de extensie `mbstring` is ingeschakeld.
+2. Kopieer in de Plesk File Manager `api/config.example.php` naar `api/config.local.php`.
+3. Vul in `config.local.php` het mailboxwachtwoord van `info@alainabouw.nl` in bij `smtp_password`.
+   De SMTP-host is `shared225.cloud86-host.io` en de SSL-poort is `465`.
+4. Haal/deploy de nieuwste repositorybestanden op naar de document root van het domein.
+   De lokale `api/config.local.php` wordt door Git genegeerd en wordt niet gepubliceerd.
+5. Test het offerteformulier met je eigen e-mailadres.
 
-Bewaar `SMTP_PASS` alleen als geheime omgevingsvariabele op de API-host; zet dit
-wachtwoord niet in broncode of in Git. Als de SMTP-instellingen ontbreken of verzending
-mislukt, krijgt de aanvrager een duidelijke foutmelding en blijft de aanvraag opgeslagen.
+Bewaar het wachtwoord alleen in `api/config.local.php` op de Cloud86-hosting, nooit in Git.
+Toegang tot dat configuratiebestand wordt via `api/.htaccess` geblokkeerd. Als SMTP ontbreekt
+of verzending mislukt, verschijnt een foutmelding en wordt de aanvraag niet als verzonden bevestigd.
 
 ## Productie-build
 
@@ -57,9 +61,8 @@ pnpm --filter @workspace/alaina-bouw-website run build
 De statische website staat daarna in `artifacts/alaina-bouw-website/dist/public`.
 Laat de webserver alle onbekende paden naar `index.html` doorsturen (single-page app).
 
-Het formulier verstuurt naar `/api/leads`. Start daarvoor `@workspace/api-server` met
-`PORT` en `DATABASE_URL`. Optioneel stuurt `LEAD_WEBHOOK_URL` (https) elke aanvraag door,
-bijvoorbeeld naar e-mail of een automatiseringstool.
+Het formulier verstuurt naar `/api/leads`. Op Cloud86 herschrijft `.htaccess` deze route naar
+`api/leads.php`; het PHP-endpoint verstuurt de aanvraag- en bevestigingsmails via Cloud86 SMTP.
 
 ## Publiceren via Git in Plesk
 
@@ -77,7 +80,6 @@ De `.htaccess`-regel stuurt directe bezoeken aan app-pagina's zoals `/diensten` 
 de React-app. Als Plesk nginx gebruikt zonder Apache `.htaccess`-ondersteuning, stel dan
 een SPA-fallback naar `/index.html` in bij de hostinginstellingen.
 
-Het offerteformulier vereist daarnaast een draaiende API-server en database; de backendcode
-staat in `artifacts/api-server` en het databaseschema in `lib/db`. De statische frontend
-alleen verwerkt geen offerteaanvragen. Configureer een backend en routeer `/api` ernaartoe
-voordat je het formulier live gebruikt.
+Als Plesk nginx gebruikt zonder Apache `.htaccess`-ondersteuning, moet `/api/leads` apart naar
+`/api/leads.php` worden gerouteerd. Zonder PHP-ondersteuning of de lokale mailconfiguratie kan
+het formulier geen e-mails versturen.
