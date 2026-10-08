@@ -1,5 +1,6 @@
 RewriteEngine On
 RewriteBase /
+RewriteRule ^api/leads/?$ api/leads.php [L]
 RewriteRule ^index\.html$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
