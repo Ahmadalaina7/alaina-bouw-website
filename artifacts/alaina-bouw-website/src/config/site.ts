@@ -4,8 +4,7 @@ import { Grid3x3, Hammer, Layers, PaintRoller, Rows3, Sprout } from 'lucide-reac
 /**
  * Centrale bedrijfsgegevens.
  *
- * Vul hier telefoonnummer, e-mail, adres, KvK en btw in zodra ze bekend zijn.
- * Lege velden worden automatisch verborgen op de hele website, dus er
+ * Lege contact- en bedrijfsvelden worden automatisch verborgen op de website, dus er
  * verschijnt nooit een lege knop of placeholder.
  */
 export const company = {
@@ -17,11 +16,11 @@ export const company = {
   /** Bijv. '+31 6 12345678' */
   phone: '',
   /** Internationaal formaat zonder + of spaties, bijv. '31612345678' */
-  whatsapp: '',
-  email: '',
+  whatsapp: '+31685516357',
+  email: 'info@alainabouw.nl',
   address: '',
-  kvk: '',
-  btw: '',
+  kvk: '42177751',
+  btw: 'NL005556959B60',
 };
 
 export const phoneHref = company.phone ? `tel:${company.phone.replace(/[^\d+]/g, '')}` : '';

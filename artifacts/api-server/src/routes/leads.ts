@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { Router, type IRouter } from "express";
 import { CreateLeadBody, CreateLeadResponse } from "@workspace/api-zod";
 import { db, leadsTable } from "@workspace/db";
+import { sendLeadEmails } from "../lib/mail";
 
 const router: IRouter = Router();
 const WINDOW_MS = 10 * 60 * 1000;
@@ -116,6 +117,23 @@ router.post("/leads", async (req, res): Promise<void> => {
     } catch {
       req.log.warn({ leadId: lead.id }, "Lead saved, but notification delivery failed");
     }
+  }
+
+  try {
+    await sendLeadEmails(data, reference);
+    await db
+      .update(leadsTable)
+      .set({ deliveryStatus: "delivered", notifiedAt: new Date() })
+      .where(eq(leadsTable.id, lead.id));
+  } catch (error) {
+    req.log.error(
+      { leadId: lead.id, errorName: error instanceof Error ? error.name : "UnknownError" },
+      "Lead saved, but email delivery failed",
+    );
+    res.status(503).json({
+      error: `Uw aanvraag is opgeslagen (${reference}), maar de e-mail kon niet worden verstuurd. Neem contact met ons op via WhatsApp.`,
+    });
+    return;
   }
 
   res.status(201).json(CreateLeadResponse.parse({ reference }));

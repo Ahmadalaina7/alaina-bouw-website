@@ -16,7 +16,7 @@ Alle bedrijfsgegevens staan in één bestand:
 
 Vul daar `phone`, `whatsapp`, `email`, `address`, `kvk` en `btw` in. Lege velden worden
 automatisch verborgen. Zodra een telefoonnummer is ingevuld, verschijnen er ook belknoppen
-in de header, het mobiele menu en de actiebalk onderin op mobiel.
+in de desktop-header en het mobiele menu.
 
 Diensten, projectfoto's en de werkwijze staan in hetzelfde bestand.
 
@@ -30,6 +30,22 @@ pnpm --filter @workspace/alaina-bouw-website run dev      # website op http://lo
 DATABASE_URL=postgres://... pnpm --filter @workspace/db run push-force
 DATABASE_URL=postgres://... PORT=8080 pnpm --filter @workspace/api-server run dev
 ```
+
+### E-mail voor offerteaanvragen
+
+De API stuurt elke aanvraag naar `info@alainabouw.nl` en stuurt de aanvrager een
+ontvangstbevestiging met het bedrijfslogo. De Cloud86-server en SSL-poort zijn al als
+standaard ingesteld. Configureer op de API-host:
+
+- `SMTP_HOST`: optioneel; standaard `shared225.cloud86-host.io`
+- `SMTP_PORT`: optioneel; standaard `465` (SSL; poort 587 kan met STARTTLS)
+- `SMTP_USER`: `info@alainabouw.nl`
+- `SMTP_PASS`: mailboxwachtwoord of app-wachtwoord
+- `SMTP_SECURE`: optioneel; standaard `true` bij poort 465, anders `false`
+
+Bewaar `SMTP_PASS` alleen als geheime omgevingsvariabele op de API-host; zet dit
+wachtwoord niet in broncode of in Git. Als de SMTP-instellingen ontbreken of verzending
+mislukt, krijgt de aanvrager een duidelijke foutmelding en blijft de aanvraag opgeslagen.
 
 ## Productie-build
 
