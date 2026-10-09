@@ -11,8 +11,8 @@ export const company = {
   name: 'Alaina Bouw',
   legalName: 'Alaina Bouw Klusbedrijf',
   tagline: 'Vakwerk in en om uw woning',
-  area: 'Heel Nederland',
-  areaLower: 'heel Nederland',
+  area: 'Heel Zeeland',
+  areaLower: 'heel Zeeland',
   /** Bijv. '+31 6 12345678' */
   phone: '',
   /** Internationaal formaat zonder + of spaties, bijv. '31612345678' */
@@ -22,6 +22,22 @@ export const company = {
   kvk: '42177751',
   btw: 'NL005556959B60',
 };
+
+export const areaPlaces = [
+  'Middelburg',
+  'Vlissingen',
+  'Goes',
+  'Terneuzen',
+  'Hulst',
+  'Sluis',
+  'Veere',
+  'Schouwen-Duiveland',
+  'Noord-Beveland',
+  'Tholen',
+  'Borsele',
+  'Kapelle',
+  'Reimerswaal',
+];
 
 export const phoneHref = company.phone ? `tel:${company.phone.replace(/[^\d+]/g, '')}` : '';
 export const whatsappHref = company.whatsapp ? `https://wa.me/${company.whatsapp.replace(/\D/g, '')}` : '';

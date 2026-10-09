@@ -1,7 +1,7 @@
 import { ArrowRight, Handshake, MapPin, MessageSquareText, Sparkles } from 'lucide-react';
 import { Link } from 'wouter';
 import { CtaBand, PageHero, Reveal } from '@/components/ui';
-import { company, photoBySrcNumber, processSteps, services } from '@/config/site';
+import { areaPlaces, company, photoBySrcNumber, processSteps, services } from '@/config/site';
 import { usePageMeta } from '@/lib/seo';
 
 export function ProcessPage() {
@@ -59,7 +59,7 @@ export function ProcessPage() {
 }
 
 export function AboutPage() {
-  usePageMeta('Over ons', 'Maak kennis met Alaina Bouw Klusbedrijf: stukadoors-, schilder-, tegel-, vloer- en tuinwerk in heel Nederland.');
+  usePageMeta('Over ons', `Maak kennis met Alaina Bouw Klusbedrijf: stukadoors-, schilder-, tegel-, vloer- en tuinwerk in ${company.areaLower}.`);
   const values = [
     { icon: MessageSquareText, title: 'Duidelijke communicatie', text: 'Vooraf heldere afspraken over aanpak, planning en kosten.' },
     { icon: Sparkles, title: 'Oog voor detail', text: 'Strakke aansluitingen en een nette afwerking maken het verschil.' },
@@ -68,7 +68,7 @@ export function AboutPage() {
   const photo = photoBySrcNumber(14);
   return (
     <>
-      <PageHero eyebrow="Over ons" title={`Maak kennis met ${company.name}.`} text={`${company.legalName} helpt particulieren in heel Nederland met het opknappen en afwerken van hun woning en tuin.`} />
+      <PageHero eyebrow="Over ons" title={`Maak kennis met ${company.name}.`} text={`${company.legalName} helpt particulieren in ${company.areaLower} met het opknappen en afwerken van hun woning en tuin.`} />
       <section className="section">
         <div className="container-x grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
           <div className="aspect-[4/5] overflow-hidden rounded-[2rem] shadow-lift">
@@ -102,24 +102,23 @@ export function AboutPage() {
 }
 
 export function AreaPage() {
-  usePageMeta('Werkgebied', 'Alaina Bouw Klusbedrijf werkt in heel Nederland. Vraag een offerte aan voor uw project, waar u ook woont.');
-  const provinces = ['Groningen', 'Friesland', 'Drenthe', 'Overijssel', 'Flevoland', 'Gelderland', 'Utrecht', 'Noord-Holland', 'Zuid-Holland', 'Zeeland', 'Noord-Brabant', 'Limburg'];
+  usePageMeta('Werkgebied', `Alaina Bouw Klusbedrijf werkt in ${company.areaLower}. Vraag een offerte aan voor uw project in Zeeland.`);
   return (
     <>
-      <PageHero eyebrow="Werkgebied" title="Actief in heel Nederland." text="Waar uw woning ook staat: u kunt uw project bij ons voorleggen. De plaats van uw project helpt ons bij de planning." />
+      <PageHero eyebrow="Werkgebied" title={`Actief in ${company.areaLower}.`} text="Ligt uw project in Zeeland, dan kunt u het bij ons voorleggen. De plaats van uw project helpt ons bij de planning." />
       <section className="section">
         <div className="container-x grid gap-12 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
           <div>
-            <h2 className="text-4xl leading-tight sm:text-5xl">Alle twaalf provincies.</h2>
+            <h2 className="text-4xl leading-tight sm:text-5xl">De gemeenten in Zeeland.</h2>
             <p className="mt-5 text-lg leading-relaxed text-stone">
-              We werken door het hele land. Vul bij uw aanvraag de plaats en eventueel de postcode in, dan stemmen we de beschikbaarheid en planning met u af.
+              We werken in heel Zeeland. Vul bij uw aanvraag de plaats en eventueel de postcode in, dan stemmen we de beschikbaarheid en planning met u af.
             </p>
             <Link href="/offerte-aanvragen" className="btn btn-primary mt-8">
               Bespreek uw project <ArrowRight className="size-4" />
             </Link>
           </div>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {provinces.map((p) => (
+            {areaPlaces.map((p) => (
               <li key={p} className="flex items-center gap-2 rounded-2xl border border-line bg-white px-4 py-4 font-medium shadow-soft">
                 <MapPin className="size-4 shrink-0 text-brand" /> {p}
               </li>

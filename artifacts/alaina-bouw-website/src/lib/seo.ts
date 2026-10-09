@@ -4,7 +4,7 @@ import { company } from '@/config/site';
 export const canonicalOrigin = 'https://alainabouw.nl';
 
 const defaultDescription =
-  'Alaina Bouw is een klusbedrijf voor bouwdiensten: stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in heel Nederland.';
+  `Alaina Bouw is een klusbedrijf voor bouwdiensten: stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in ${company.areaLower}.`;
 
 const defaultKeywords = [
   'Alaina Bouw',
@@ -19,6 +19,7 @@ const defaultKeywords = [
   'laminaat leggen',
   'tuinwerk',
   'offerte klusbedrijf',
+  'klusbedrijf Zeeland',
 ];
 
 function setMeta(attribute: 'name' | 'property', key: string, content: string) {

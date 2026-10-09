@@ -6,7 +6,7 @@ import { usePageMeta } from '@/lib/seo';
 import NotFound from './NotFound';
 
 export function ServicesPage() {
-  usePageMeta('Bouwdiensten van het klusbedrijf', 'Bouwdiensten van Alaina Bouw: stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in heel Nederland.');
+  usePageMeta('Bouwdiensten van het klusbedrijf', `Bouwdiensten van Alaina Bouw: stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in ${company.areaLower}.`);
   return (
     <>
       <PageHero
@@ -40,7 +40,7 @@ export function ServicesPage() {
 
 export function ServiceDetailPage({ slug }: { slug: string }) {
   const service = services.find((s) => s.slug === slug);
-  usePageMeta(service ? service.title : 'Pagina niet gevonden', service ? `${service.title} door Alaina Bouw Klusbedrijf. ${service.short} Werkgebied: heel Nederland.` : undefined);
+  usePageMeta(service ? service.title : 'Pagina niet gevonden', service ? `${service.title} door Alaina Bouw Klusbedrijf. ${service.short} Werkgebied: ${company.areaLower}.` : undefined);
   if (!service) return <NotFound />;
   const Icon = service.icon;
   const others = services.filter((s) => s.slug !== slug);

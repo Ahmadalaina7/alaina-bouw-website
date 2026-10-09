@@ -14,7 +14,7 @@ export function Footer() {
           <div>
             <Logo variant="light" />
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-white/60">
-              {company.legalName}. Stukadoors-, schilder-, tegel-, vloer- en tuinwerk voor particulieren in heel Nederland.
+              {company.legalName}. Stukadoors-, schilder-, tegel-, vloer- en tuinwerk voor particulieren in {company.areaLower}.
             </p>
           </div>
 

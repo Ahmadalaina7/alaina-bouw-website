@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, MapPin } from 'lucide-react';
 import { Link } from 'wouter';
 import { CtaBand, Reveal, SectionHeading, ServiceCard } from '@/components/ui';
-import { company, photoBySrcNumber, processSteps, projectPhotos, services } from '@/config/site';
+import { areaPlaces, company, photoBySrcNumber, processSteps, projectPhotos, services } from '@/config/site';
 import { usePageMeta } from '@/lib/seo';
 
 const heroMain = photoBySrcNumber(1);
@@ -10,7 +10,7 @@ const heroMain = photoBySrcNumber(1);
 export default function Home() {
   usePageMeta(
     'Klusbedrijf voor bouwdiensten',
-    'Alaina Bouw is een klusbedrijf voor stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in heel Nederland. Vraag vrijblijvend een offerte aan.',
+    `Alaina Bouw is een klusbedrijf voor stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in ${company.areaLower}. Vraag vrijblijvend een offerte aan.`,
   );
   return (
     <>
@@ -184,14 +184,14 @@ function AreaBand() {
       <div className="container-x grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-20">
         <div>
           <p className="eyebrow">Werkgebied</p>
-          <h2 className="mt-4 text-[2.1rem] leading-[1.1] sm:text-5xl">Actief in heel Nederland.</h2>
+          <h2 className="mt-4 text-[2.1rem] leading-[1.1] sm:text-5xl">Actief in {company.areaLower}.</h2>
           <p className="mt-5 max-w-lg text-lg leading-relaxed text-stone">
-            Of u nu in de Randstad woont of daarbuiten: we komen graag bij u langs. Laat ons weten waar uw project zich bevindt, dan stemmen we de planning met u af.
+            Van Zeeuws-Vlaanderen tot Schouwen-Duiveland: we komen bij u langs. Laat ons weten waar uw project zich bevindt, dan stemmen we de planning met u af.
           </p>
           <Link href="/werkgebied" className="link-arrow mt-6">Meer over ons werkgebied <ArrowRight className="size-4" /></Link>
         </div>
         <div className="flex flex-wrap gap-2.5 lg:justify-end">
-          {['Noord-Holland', 'Zuid-Holland', 'Utrecht', 'Noord-Brabant', 'Gelderland', 'Flevoland', 'Overijssel', 'Limburg', 'Zeeland', 'Friesland', 'Groningen', 'Drenthe'].map((p) => (
+          {areaPlaces.map((p) => (
             <span key={p} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-ink/80">
               <MapPin className="size-3.5 text-brand" /> {p}
             </span>
