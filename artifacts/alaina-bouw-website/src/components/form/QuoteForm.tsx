@@ -1,20 +1,22 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ComponentType, type FormEvent, type SVGProps } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCreateLead } from '@workspace/api-client-react';
-import type { LeadInput } from '@workspace/api-client-react';
+import { useMutation } from '@tanstack/react-query';
+import { createLead, type LeadCreated, type LeadInput } from '@workspace/api-client-react';
 import {
   ArrowLeft,
   ArrowRight,
   Check,
+  FileText,
+  ImagePlus,
   Loader2,
   Lock,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
   User,
-  type LucideIcon,
+  X,
 } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { Link } from 'wouter';
 import { company, otherService, phoneHref, services } from '@/config/site';
 import { cn } from '@/lib/utils';
@@ -41,10 +43,10 @@ const budgetOptions: { value: Budget; label: string }[] = [
   { value: 'undecided', label: 'Weet ik nog niet' },
 ];
 
-const contactOptions: { value: ContactPreference; label: string; icon: LucideIcon }[] = [
+const contactOptions: { value: ContactPreference; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { value: 'email', label: 'E-mail', icon: Mail },
   { value: 'phone', label: 'Telefoon', icon: Phone },
-  { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+  { value: 'whatsapp', label: 'WhatsApp', icon: WhatsAppIcon },
 ];
 
 const serviceOptions = [
@@ -90,6 +92,57 @@ const DRAFT_KEY = 'alaina-bouw:aanvraag';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^[+\d][\d\s\-().]{5,}$/;
 const postalPattern = /^\d{4}\s?[a-zA-Z]{2}$/;
+const MAX_ATTACHMENTS = 5;
+const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+const MAX_ATTACHMENT_TOTAL_BYTES = 20 * 1024 * 1024;
+const attachmentExtensions = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'pdf']);
+
+function fileExtension(name: string) {
+  return name.split('.').pop()?.toLowerCase() ?? '';
+}
+
+function attachmentError(files: File[]): string | undefined {
+  if (files.length > MAX_ATTACHMENTS) return 'U kunt maximaal 5 bestanden toevoegen.';
+  if (files.some((file) => file.size > MAX_ATTACHMENT_BYTES)) return 'Een bestand is groter dan 8 MB.';
+  if (files.reduce((total, file) => total + file.size, 0) > MAX_ATTACHMENT_TOTAL_BYTES) return 'De bestanden zijn samen groter dan 20 MB.';
+  if (files.some((file) => !attachmentExtensions.has(fileExtension(file.name)))) return 'Gebruik een foto (JPG, PNG, WEBP, HEIC) of een PDF.';
+  return undefined;
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+}
+
+function canPreview(file: File) {
+  return file.type.startsWith('image/') && file.type !== 'image/heic' && file.type !== 'image/heif';
+}
+
+function submitErrorMessage(error: unknown): string | null {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const data = (error as { data?: unknown }).data;
+    if (data && typeof data === 'object' && 'error' in data && typeof (data as { error: unknown }).error === 'string') {
+      return (data as { error: string }).error;
+    }
+  }
+  if (error instanceof Error && error.name !== 'ApiError' && error.name !== 'TypeError' && error.message) return error.message;
+  return null;
+}
+
+async function submitLead(input: { data: LeadInput; files: File[] }): Promise<LeadCreated> {
+  if (input.files.length === 0) return createLead(input.data);
+
+  const body = new FormData();
+  body.append('payload', JSON.stringify(input.data));
+  for (const file of input.files) body.append('files[]', file, file.name);
+
+  const response = await fetch('/api/leads', { method: 'POST', body, headers: { Accept: 'application/json' } });
+  const payload = (await response.json().catch(() => null)) as { reference?: string; error?: string } | null;
+  if (!response.ok || !payload?.reference) {
+    throw new Error(payload?.error || 'Het versturen is niet gelukt. Probeer het opnieuw.');
+  }
+  return { reference: payload.reference };
+}
 
 function validate(step: number, v: Values): Errors {
   const e: Errors = {};
@@ -128,8 +181,10 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
   const [direction, setDirection] = useState(1);
   const [values, setValues] = useState<Values>(() => loadDraft(initialService));
   const [errors, setErrors] = useState<Errors>({});
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string>();
   const topRef = useRef<HTMLDivElement>(null);
-  const mutation = useCreateLead();
+  const mutation = useMutation({ mutationFn: submitLead });
 
   useEffect(() => {
     if (mutation.isSuccess) return;
@@ -169,10 +224,33 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
     scrollToTop();
   };
 
+  const addFiles = (list: FileList | null) => {
+    if (!list?.length) return;
+    const nextFiles = [...files];
+    for (const file of list) {
+      const duplicate = nextFiles.some((current) => current.name === file.name && current.size === file.size && current.lastModified === file.lastModified);
+      if (!duplicate) nextFiles.push(file);
+    }
+    setFiles(nextFiles);
+    setFileError(attachmentError(nextFiles));
+  };
+
+  const removeFile = (file: File) => {
+    const nextFiles = files.filter((current) => current !== file);
+    setFiles(nextFiles);
+    setFileError(attachmentError(nextFiles));
+  };
+
   const next = () => {
     const errs = validate(step, values);
+    const attachmentMessage = step === 0 ? attachmentError(files) : undefined;
     setErrors(errs);
+    setFileError(attachmentMessage);
     if (Object.keys(errs).length) return focusFirstError(errs);
+    if (attachmentMessage) {
+      requestAnimationFrame(() => topRef.current?.querySelector<HTMLElement>('input[name="attachments"]')?.focus());
+      return;
+    }
     goTo(step + 1);
   };
 
@@ -180,8 +258,14 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
     e.preventDefault();
     if (step < steps.length - 1) return next();
     const errs = validate(step, values);
+    const attachmentMessage = attachmentError(files);
     setErrors(errs);
+    setFileError(attachmentMessage);
     if (Object.keys(errs).length) return focusFirstError(errs);
+    if (attachmentMessage) {
+      goTo(0);
+      return;
+    }
 
     const params = new URLSearchParams(window.location.search);
     const utm = (key: string) => params.get(key)?.slice(0, 200) || undefined;
@@ -203,7 +287,7 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
       ...(utm('utm_campaign') ? { utmCampaign: utm('utm_campaign') } : {}),
     };
     mutation.mutate(
-      { data },
+      { data, files },
       {
         onSuccess: () => {
           try {
@@ -218,7 +302,7 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
   };
 
   if (mutation.isSuccess) {
-    return <SuccessState values={values} reference={mutation.data?.reference} />;
+    return <SuccessState values={values} reference={mutation.data?.reference} fileCount={files.length} />;
   }
 
   const descriptionHint = services.find((s) => s.slug === values.service)?.requestHint;
@@ -287,6 +371,7 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
                     </span>
                   }
                 />
+                <AttachmentField files={files} error={fileError} onAdd={addFiles} onRemove={removeFile} />
               </>
             )}
 
@@ -400,6 +485,8 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
         {mutation.isError && (
           <div role="alert" className="mt-6 rounded-2xl border border-brand/20 bg-brand-soft p-4 text-sm leading-relaxed text-brand-dark">
             <strong className="block">Het versturen is niet gelukt.</strong>
+            {submitErrorMessage(mutation.error) ?? (
+              <>
             Uw gegevens staan nog in het formulier. Controleer uw internetverbinding en probeer het opnieuw
             {phoneHref ? (
               <>
@@ -407,6 +494,8 @@ export function QuoteForm({ initialService }: { initialService?: string }) {
               </>
             ) : null}
             .
+              </>
+            )}
           </div>
         )}
 
@@ -491,7 +580,83 @@ function Stepper({ step, onStepClick }: { step: number; onStepClick: (i: number)
   );
 }
 
-function SuccessState({ values, reference }: { values: Values; reference?: string }) {
+function AttachmentField({ files, error, onAdd, onRemove }: { files: File[]; error?: string; onAdd: (list: FileList | null) => void; onRemove: (file: File) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [previews, setPreviews] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const created: Record<string, string> = {};
+    for (const file of files) {
+      if (canPreview(file)) created[`${file.name}:${file.size}:${file.lastModified}`] = URL.createObjectURL(file);
+    }
+    setPreviews(created);
+    return () => {
+      for (const url of Object.values(created)) URL.revokeObjectURL(url);
+    };
+  }, [files]);
+
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between">
+        <p id="attachments-label" className="text-sm font-semibold text-ink">Foto's of bestanden</p>
+        <span className="text-xs font-normal text-stone">Optioneel</span>
+      </div>
+      <label
+        className={cn(
+          'flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed bg-white px-4 py-5 text-sm font-semibold text-ink transition-colors hover:border-stone/50 has-[:focus-visible]:border-brand has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-brand/10',
+          error ? 'border-brand' : 'border-line',
+        )}
+      >
+        <ImagePlus className="size-5 text-brand" />
+        Foto of bestand toevoegen
+        <input
+          ref={inputRef}
+          type="file"
+          name="attachments"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.pdf,application/pdf"
+          multiple
+          className="sr-only"
+          aria-labelledby="attachments-label"
+          aria-describedby={error ? 'attachments-error' : 'attachments-hint'}
+          onChange={(event) => {
+            onAdd(event.target.files);
+            event.target.value = '';
+          }}
+        />
+      </label>
+      {files.length > 0 && (
+        <ul className="mt-3 grid gap-2">
+          {files.map((file) => {
+            const key = `${file.name}:${file.size}:${file.lastModified}`;
+            const preview = previews[key];
+            return (
+              <li key={key} className="flex items-center gap-3 rounded-xl border border-line bg-white p-2 pr-3">
+                {preview ? (
+                  <img src={preview} alt="" className="size-12 rounded-lg object-cover" />
+                ) : (
+                  <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-sand text-brand">
+                    <FileText className="size-5" />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-ink">{file.name}</span>
+                  <span className="text-xs text-stone">{formatFileSize(file.size)}</span>
+                </span>
+                <button type="button" className="grid size-8 place-items-center rounded-full text-stone hover:bg-sand hover:text-ink" aria-label={`Verwijder ${file.name}`} onClick={() => onRemove(file)}>
+                  <X className="size-4" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <p id="attachments-hint" className="mt-2 text-xs leading-relaxed text-stone">Foto's van de ruimte of een PDF. Maximaal 5 bestanden, 8 MB per bestand.</p>
+      <FieldError id="attachments-error" message={error} />
+    </div>
+  );
+}
+
+function SuccessState({ values, reference, fileCount = 0 }: { values: Values; reference?: string; fileCount?: number }) {
   const service = serviceOptions.find((s) => s.value === values.service)?.label;
   const timeline = timelineOptions.find((t) => t.value === values.timeline)?.label;
   const firstName = values.name.trim().split(/\s+/)[0];
@@ -510,6 +675,7 @@ function SuccessState({ values, reference }: { values: Values; reference?: strin
       <h2 className="mt-6 text-3xl sm:text-4xl">Bedankt, {firstName}!</h2>
       <p className="mx-auto mt-3 max-w-md leading-relaxed text-stone">
         Uw aanvraag is goed ontvangen. We nemen zo snel mogelijk contact met u op via {contact}.
+        {fileCount > 0 ? ` We hebben ook ${fileCount === 1 ? 'uw bestand' : `uw ${fileCount} bestanden`} ontvangen.` : ''}
       </p>
       {reference && (
         <p className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full bg-sand px-4 py-2 text-sm">

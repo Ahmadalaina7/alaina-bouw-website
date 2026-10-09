@@ -1,6 +1,9 @@
-import { CheckCircle2, Clock, Mail, MapPin, MessageCircle, Phone, ShieldCheck } from 'lucide-react';
+import type { ComponentType, SVGProps } from 'react';
+import { CheckCircle2, Clock, Mail, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { QuoteForm } from '@/components/form/QuoteForm';
-import { company, emailHref, phoneHref, processSteps, whatsappHref } from '@/config/site';
+import { InstagramIcon } from '@/components/icons/InstagramIcon';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { company, emailHref, instagramHref, phoneHref, processSteps, whatsappHref } from '@/config/site';
 import { usePageMeta } from '@/lib/seo';
 
 function useInitialService() {
@@ -10,9 +13,10 @@ function useInitialService() {
 function ContactCards() {
   const cards = [
     phoneHref && { href: phoneHref, icon: Phone, label: 'Bel ons', value: company.phone },
-    whatsappHref && { href: whatsappHref, icon: MessageCircle, label: 'WhatsApp', value: 'Stuur een bericht', external: true },
+    whatsappHref && { href: whatsappHref, icon: WhatsAppIcon, label: 'WhatsApp', value: 'Stuur een bericht', external: true },
+    instagramHref && { href: instagramHref, icon: InstagramIcon, label: 'Instagram', value: '@alainabouw', external: true },
     emailHref && { href: emailHref, icon: Mail, label: 'E-mail', value: company.email },
-  ].filter(Boolean) as { href: string; icon: typeof Phone; label: string; value: string; external?: boolean }[];
+  ].filter(Boolean) as { href: string; icon: ComponentType<SVGProps<SVGSVGElement>>; label: string; value: string; external?: boolean }[];
 
   if (!cards.length) return null;
   return (

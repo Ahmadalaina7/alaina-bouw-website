@@ -18,6 +18,7 @@ export const company = {
   /** Internationaal formaat zonder + of spaties, bijv. '31612345678' */
   whatsapp: '+31685516357',
   email: 'info@alainabouw.nl',
+  instagram: 'https://www.instagram.com/alainabouw',
   address: '',
   kvk: '42177751',
   btw: 'NL005556959B60',
@@ -42,6 +43,7 @@ export const areaPlaces = [
 export const phoneHref = company.phone ? `tel:${company.phone.replace(/[^\d+]/g, '')}` : '';
 export const whatsappHref = company.whatsapp ? `https://wa.me/${company.whatsapp.replace(/\D/g, '')}` : '';
 export const emailHref = company.email ? `mailto:${company.email}` : '';
+export const instagramHref = company.instagram;
 
 const photoBase = `${import.meta.env.BASE_URL}project-photos/`;
 

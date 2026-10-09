@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { createTransport } from "nodemailer";
 import type { LeadInput } from "@workspace/api-zod";
+import type { LeadUpload } from "./uploads";
 
 const BUSINESS_EMAIL = "info@alainabouw.nl";
 const LOGO_CID = "alaina-bouw-logo";
@@ -83,7 +84,7 @@ function detail(label: string, value: string): string {
   return `<tr><td style="padding:9px 0;border-bottom:1px solid #eee9e3;color:#6b645e;vertical-align:top">${escapeHtml(label)}</td><td style="padding:9px 0;border-bottom:1px solid #eee9e3;color:#1b1817;vertical-align:top;white-space:pre-wrap">${escapeHtml(value)}</td></tr>`;
 }
 
-export async function sendLeadEmails(data: LeadInput, reference: string): Promise<void> {
+export async function sendLeadEmails(data: LeadInput, reference: string, uploads: LeadUpload[] = []): Promise<void> {
   const transport = getTransport();
   const logo = await readFile(new URL("./assets/logo-mark.png", import.meta.url));
   const greetingName = escapeHtml(data.name.trim().split(/\s+/)[0] ?? data.name);
@@ -95,7 +96,10 @@ export async function sendLeadEmails(data: LeadInput, reference: string): Promis
     ...(data.postalCode ? [detail("Postcode", data.postalCode)] : []),
     ...(data.budget ? [detail("Budgetindicatie", budgetLabels[data.budget])] : []),
   ].join("");
-  const attachment = {
+  const attachmentNote = uploads.length
+    ? `Bijlagen: ${uploads.map((file) => file.filename).join(", ")}`
+    : "";
+  const logoAttachment = {
     filename: "alaina-bouw-logo.png",
     content: logo,
     cid: LOGO_CID,
@@ -118,6 +122,7 @@ export async function sendLeadEmails(data: LeadInput, reference: string): Promis
       ...(data.postalCode ? [`Postcode: ${data.postalCode}`] : []),
       ...(data.budget ? [`Budget: ${budgetLabels[data.budget]}`] : []),
       `Contactvoorkeur: ${data.contactPreference}`,
+      ...(attachmentNote ? [attachmentNote] : []),
       `Referentie: ${reference}`,
     ].join("\n"),
     html: layout(
@@ -129,9 +134,17 @@ export async function sendLeadEmails(data: LeadInput, reference: string): Promis
          ${detail("Telefoon", data.phone)}
          ${rows}
          ${detail("Contactvoorkeur", data.contactPreference)}
+         ${attachmentNote ? detail("Bijlagen", uploads.map((file) => file.filename).join(", ")) : ""}
        </table>`,
     ),
-    attachments: [attachment],
+    attachments: [
+      logoAttachment,
+      ...uploads.map((file) => ({
+        filename: file.filename,
+        content: file.content,
+        contentType: file.contentType,
+      })),
+    ],
   });
 
   await transport.sendMail({
@@ -150,6 +163,7 @@ export async function sendLeadEmails(data: LeadInput, reference: string): Promis
       `Plaats: ${data.city}`,
       ...(data.postalCode ? [`Postcode: ${data.postalCode}`] : []),
       ...(data.budget ? [`Budgetindicatie: ${budgetLabels[data.budget]}`] : []),
+      ...(uploads.length ? [`Meegestuurde bestanden: ${uploads.length}`] : []),
       "",
       `Uw referentie: ${reference}`,
       "",
@@ -170,9 +184,10 @@ export async function sendLeadEmails(data: LeadInput, reference: string): Promis
          ${detail("Plaats", data.city)}
          ${data.postalCode ? detail("Postcode", data.postalCode) : ""}
          ${data.budget ? detail("Budgetindicatie", budgetLabels[data.budget]) : ""}
+         ${uploads.length ? detail("Meegestuurde bestanden", String(uploads.length)) : ""}
        </table>
        <p style="margin:24px 0 0;line-height:1.65;color:#4b4541">Met vriendelijke groet,<br><strong>Alaina Bouw Klusbedrijf</strong></p>`,
     ),
-    attachments: [attachment],
+    attachments: [logoAttachment],
   });
 }

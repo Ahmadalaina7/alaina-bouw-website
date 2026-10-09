@@ -10,7 +10,11 @@ require __DIR__ . '/vendor/autoload.php';
 const BUSINESS_EMAIL = 'info@alainabouw.nl';
 const MAX_REQUESTS = 5;
 const RATE_WINDOW_SECONDS = 600;
-const MAX_REQUEST_BYTES = 16384;
+const MAX_JSON_BYTES = 16384;
+const MAX_UPLOAD_BYTES = 24 * 1024 * 1024;
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
+const MAX_TOTAL_FILE_BYTES = 20 * 1024 * 1024;
+const MAX_FILES = 5;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -157,7 +161,10 @@ function emailLayout(string $content): string
         . '</td></tr></table></body></html>';
 }
 
-function sendEmail(array $config, string $recipient, string $subject, string $text, string $html, ?string $replyTo = null): void
+/**
+ * @param list<array{path: string, name: string}> $attachments
+ */
+function sendEmail(array $config, string $recipient, string $subject, string $text, string $html, ?string $replyTo = null, array $attachments = []): void
 {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
@@ -179,7 +186,120 @@ function sendEmail(array $config, string $recipient, string $subject, string $te
     $mail->Body = $html;
     $mail->AltBody = $text;
     $mail->addEmbeddedImage(dirname(__DIR__) . '/logo-mark.png', 'alaina-bouw-logo', 'logo-mark.png', PHPMailer::ENCODING_BASE64, 'image/png');
+    foreach ($attachments as $file) {
+        $mail->addAttachment($file['path'], $file['name']);
+    }
     $mail->send();
+}
+
+function isMultipartRequest(): bool
+{
+    $type = $_SERVER['CONTENT_TYPE'] ?? '';
+    return stripos($type, 'multipart/form-data') === 0;
+}
+
+function requestByteLimit(): int
+{
+    return isMultipartRequest() ? MAX_UPLOAD_BYTES : MAX_JSON_BYTES;
+}
+
+/**
+ * @return list<array{path: string, name: string}>
+ */
+function collectAttachments(): array
+{
+    if (!isset($_FILES['files'])) {
+        return [];
+    }
+
+    $batch = $_FILES['files'];
+    $entries = [];
+    if (is_array($batch['name'] ?? null)) {
+        foreach ($batch['name'] as $index => $name) {
+            $entries[] = [
+                'name' => is_string($name) ? $name : '',
+                'tmp_name' => is_string($batch['tmp_name'][$index] ?? null) ? $batch['tmp_name'][$index] : '',
+                'error' => is_int($batch['error'][$index] ?? null) ? $batch['error'][$index] : UPLOAD_ERR_NO_FILE,
+                'size' => is_int($batch['size'][$index] ?? null) ? $batch['size'][$index] : 0,
+            ];
+        }
+    } else {
+        $entries[] = [
+            'name' => is_string($batch['name'] ?? null) ? $batch['name'] : '',
+            'tmp_name' => is_string($batch['tmp_name'] ?? null) ? $batch['tmp_name'] : '',
+            'error' => is_int($batch['error'] ?? null) ? $batch['error'] : UPLOAD_ERR_NO_FILE,
+            'size' => is_int($batch['size'] ?? null) ? $batch['size'] : 0,
+        ];
+    }
+
+    $entries = array_values(array_filter(
+        $entries,
+        static fn (array $file): bool => $file['error'] !== UPLOAD_ERR_NO_FILE,
+    ));
+    if (count($entries) > MAX_FILES) {
+        respond(400, ['error' => 'U kunt maximaal 5 bestanden meesturen.']);
+    }
+
+    $allowedExtensions = [
+        'image/jpeg' => ['jpg', 'jpeg'],
+        'image/png' => ['png'],
+        'image/webp' => ['webp'],
+        'image/gif' => ['gif'],
+        'image/heic' => ['heic', 'heif'],
+        'image/heif' => ['heic', 'heif'],
+        'image/heic-sequence' => ['heic'],
+        'image/heif-sequence' => ['heif'],
+        'application/pdf' => ['pdf'],
+    ];
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $total = 0;
+    $usedNames = [];
+    $attachments = [];
+
+    foreach ($entries as $file) {
+        if ($file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE || $file['size'] > MAX_FILE_BYTES) {
+            respond(413, ['error' => 'Een bestand is te groot. Maximaal 8 MB per bestand.']);
+        }
+        if ($file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) {
+            respond(400, ['error' => 'Een bestand kon niet worden gelezen. Probeer het opnieuw.']);
+        }
+
+        $total += $file['size'];
+        if ($total > MAX_TOTAL_FILE_BYTES) {
+            respond(413, ['error' => 'De bestanden zijn samen te groot. Maximaal 20 MB in totaal.']);
+        }
+
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $detected = $finfo->file($file['tmp_name']);
+        $heicFallback = $detected === 'application/octet-stream' && in_array($extension, ['heic', 'heif'], true);
+        if (
+            !is_string($detected) ||
+            (!isset($allowedExtensions[$detected]) && !$heicFallback) ||
+            ($heicFallback === false && !in_array($extension, $allowedExtensions[$detected], true)) ||
+            !in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'pdf'], true)
+        ) {
+            respond(400, ['error' => 'Gebruik een foto (JPG, PNG, WEBP, HEIC) of een PDF.']);
+        }
+
+        $base = pathinfo($file['name'], PATHINFO_FILENAME);
+        $base = preg_replace('/[^\p{L}\p{N}._ -]+/u', '', $base) ?? '';
+        $base = trim((string) $base, ". \t\n\r\0\x0B");
+        if ($base === '') {
+            $base = 'bestand';
+        }
+        $base = mb_substr($base, 0, 60, 'UTF-8');
+        $safeName = $base . '.' . $extension;
+        if (isset($usedNames[$safeName])) {
+            $usedNames[$safeName]++;
+            $safeName = $base . '-' . $usedNames[$safeName] . '.' . $extension;
+        } else {
+            $usedNames[$safeName] = 1;
+        }
+
+        $attachments[] = ['path' => $file['tmp_name'], 'name' => $safeName];
+    }
+
+    return $attachments;
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -187,8 +307,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     respond(405, ['error' => 'Deze aanvraagmethode wordt niet ondersteund.']);
 }
 
-if (ctype_digit($_SERVER['CONTENT_LENGTH'] ?? '') && (int) $_SERVER['CONTENT_LENGTH'] > MAX_REQUEST_BYTES) {
-    respond(413, ['error' => 'De aanvraag is te groot.']);
+if (ctype_digit($_SERVER['CONTENT_LENGTH'] ?? '') && (int) $_SERVER['CONTENT_LENGTH'] > requestByteLimit()) {
+    respond(413, ['error' => 'De aanvraag is te groot. Maximaal 8 MB per bestand en 20 MB in totaal.']);
 }
 
 if (!allowRequest()) {
@@ -196,11 +316,19 @@ if (!allowRequest()) {
 }
 
 try {
-    $rawBody = file_get_contents('php://input', false, null, 0, MAX_REQUEST_BYTES + 1);
-    if (is_string($rawBody) && strlen($rawBody) > MAX_REQUEST_BYTES) {
-        respond(413, ['error' => 'De aanvraag is te groot.']);
+    if (isMultipartRequest()) {
+        if ($_POST === [] && $_FILES === [] && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+            respond(413, ['error' => 'De bestanden zijn te groot. Maximaal 8 MB per bestand en 20 MB in totaal.']);
+        }
+        $payload = $_POST['payload'] ?? '';
+        $data = json_decode(is_string($payload) ? $payload : '', true, 512, JSON_THROW_ON_ERROR);
+    } else {
+        $rawBody = file_get_contents('php://input', false, null, 0, MAX_JSON_BYTES + 1);
+        if (is_string($rawBody) && strlen($rawBody) > MAX_JSON_BYTES) {
+            respond(413, ['error' => 'De aanvraag is te groot.']);
+        }
+        $data = json_decode(is_string($rawBody) ? $rawBody : '', true, 512, JSON_THROW_ON_ERROR);
     }
-    $data = json_decode(is_string($rawBody) ? $rawBody : '', true, 512, JSON_THROW_ON_ERROR);
 } catch (JsonException) {
     respond(400, ['error' => 'De aanvraag kon niet worden gelezen. Controleer de ingevulde gegevens.']);
 }
@@ -242,6 +370,10 @@ if (
     respond(400, ['error' => 'Controleer de ingevulde gegevens en probeer het opnieuw.']);
 }
 
+$attachments = isMultipartRequest() ? collectAttachments() : [];
+$attachmentNames = array_map(static fn (array $file): string => $file['name'], $attachments);
+$attachmentText = $attachmentNames === [] ? '' : 'Bijlagen: ' . implode(', ', $attachmentNames);
+
 $postalCode = strtoupper($postalCode);
 $reference = referenceCode();
 $firstName = explode(' ', $name)[0];
@@ -277,29 +409,36 @@ if (
 $adminText = "Nieuwe offerteaanvraag {$reference}\nNaam: {$name}\nE-mail: {$email}\nTelefoon: {$phone}\nSoort werk: {$serviceLabel}\nOmschrijving: {$description}\nPlanning: {$timelineText}\nPlaats: {$city}\n"
     . ($postalCode !== '' ? "Postcode: {$postalCode}\n" : '')
     . ($budgetText !== '' ? "Budgetindicatie: {$budgetText}\n" : '')
-    . "Contactvoorkeur: {$contactPreference}\nReferentie: {$reference}";
+    . "Contactvoorkeur: {$contactPreference}\n"
+    . ($attachmentText !== '' ? $attachmentText . "\n" : '')
+    . "Referentie: {$reference}";
 $adminHtml = emailLayout(
     '<h1 style="margin:0 0 8px;font-size:24px">Nieuwe offerteaanvraag</h1>'
     . '<p style="margin:0 0 20px;color:#6b645e">Referentie: <strong>' . escapeHtml($reference) . '</strong></p>'
     . '<table role="presentation" style="width:100%;border-spacing:0;font-size:14px">'
     . detailRow('Naam', $name) . detailRow('E-mail', $email) . detailRow('Telefoon', $phone) . $rows
-    . detailRow('Contactvoorkeur', $contactPreference) . '</table>',
+    . detailRow('Contactvoorkeur', $contactPreference)
+    . ($attachmentText !== '' ? detailRow('Bijlagen', implode(', ', $attachmentNames)) : '')
+    . '</table>',
 );
 $customerText = "Beste {$firstName},\n\nBedankt voor uw aanvraag. We hebben uw bericht goed ontvangen en nemen contact met u op.\n\nSoort werk: {$serviceLabel}\nOmschrijving: {$description}\nPlanning: {$timelineText}\nPlaats: {$city}\n"
     . ($postalCode !== '' ? "Postcode: {$postalCode}\n" : '')
     . ($budgetText !== '' ? "Budgetindicatie: {$budgetText}\n" : '')
+    . ($attachmentNames !== [] ? 'Meegestuurde bestanden: ' . count($attachmentNames) . "\n" : '')
     . "\nUw referentie: {$reference}\n\nMet vriendelijke groet,\nAlaina Bouw Klusbedrijf";
 $customerHtml = emailLayout(
     '<h1 style="margin:0 0 12px;font-size:24px">Bedankt voor uw aanvraag, ' . escapeHtml($firstName) . '</h1>'
     . '<p style="margin:0 0 20px;line-height:1.65;color:#4b4541">We hebben uw bericht goed ontvangen en nemen contact met u op.</p>'
     . '<p style="margin:0 0 16px;padding:14px 16px;border-radius:10px;background:#f7e7e6;color:#820b0f;font-size:14px">Uw referentie: <strong>'
     . escapeHtml($reference) . '</strong></p><h2 style="margin:24px 0 8px;font-size:17px">Uw aanvraag</h2>'
-    . '<table role="presentation" style="width:100%;border-spacing:0;font-size:14px">' . $rows . '</table>'
+    . '<table role="presentation" style="width:100%;border-spacing:0;font-size:14px">' . $rows
+    . ($attachmentNames !== [] ? detailRow('Meegestuurde bestanden', (string) count($attachmentNames)) : '')
+    . '</table>'
     . '<p style="margin:24px 0 0;line-height:1.65;color:#4b4541">Met vriendelijke groet,<br><strong>Alaina Bouw Klusbedrijf</strong></p>',
 );
 
 try {
-    sendEmail($config, BUSINESS_EMAIL, "Nieuwe offerteaanvraag {$reference}", $adminText, $adminHtml, $email);
+    sendEmail($config, BUSINESS_EMAIL, "Nieuwe offerteaanvraag {$reference}", $adminText, $adminHtml, $email, $attachments);
     sendEmail($config, $email, "We hebben uw aanvraag ontvangen ({$reference})", $customerText, $customerHtml, BUSINESS_EMAIL);
 } catch (MailException $error) {
     error_log('Alaina Bouw SMTP delivery failed: ' . $error->getMessage());

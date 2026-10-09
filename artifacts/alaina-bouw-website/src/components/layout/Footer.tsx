@@ -1,6 +1,8 @@
-import { Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { InstagramIcon } from '@/components/icons/InstagramIcon';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { Link } from 'wouter';
-import { company, emailHref, phoneHref, services, whatsappHref } from '@/config/site';
+import { company, emailHref, instagramHref, phoneHref, services, whatsappHref } from '@/config/site';
 import { Logo } from './Logo';
 
 const linkClass = 'text-white/70 no-underline transition-colors hover:text-white';
@@ -46,7 +48,10 @@ export function Footer() {
                 <li><a href={phoneHref} className={`${linkClass} inline-flex items-center gap-2`}><Phone className="size-4" />{company.phone}</a></li>
               )}
               {whatsappHref && (
-                <li><a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={`${linkClass} inline-flex items-center gap-2`}><MessageCircle className="size-4" />WhatsApp</a></li>
+                <li><a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={`${linkClass} inline-flex items-center gap-2`}><WhatsAppIcon className="size-4" />WhatsApp</a></li>
+              )}
+              {instagramHref && (
+                <li><a href={instagramHref} target="_blank" rel="noopener noreferrer" className={`${linkClass} inline-flex items-center gap-2`}><InstagramIcon className="size-4" />Instagram</a></li>
               )}
               {emailHref && (
                 <li><a href={emailHref} className={`${linkClass} inline-flex items-center gap-2`}><Mail className="size-4" />{company.email}</a></li>

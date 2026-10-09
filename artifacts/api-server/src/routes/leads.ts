@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
-import { Router, type IRouter } from "express";
+import express, { Router, type IRouter } from "express";
 import { CreateLeadBody, CreateLeadResponse } from "@workspace/api-zod";
 import { db, leadsTable } from "@workspace/db";
 import { sendLeadEmails } from "../lib/mail";
+import { acceptUploads, parseMultipart, type LeadUpload } from "../lib/uploads";
 
 const router: IRouter = Router();
 const WINDOW_MS = 10 * 60 * 1000;
@@ -34,13 +35,40 @@ function isRateLimited(ip: string): boolean {
   return window.count > MAX_REQUESTS_PER_WINDOW;
 }
 
-router.post("/leads", async (req, res): Promise<void> => {
+router.post("/leads", express.raw({ type: "multipart/form-data", limit: "24mb" }), async (req, res): Promise<void> => {
   if (isRateLimited(req.ip || "unknown")) {
     res.status(429).json({ error: "Er zijn te veel aanvragen verstuurd. Probeer het later opnieuw." });
     return;
   }
 
-  const parsed = CreateLeadBody.safeParse(req.body);
+  const contentType = req.header("content-type") ?? "";
+  let body: unknown = req.body;
+  let uploads: LeadUpload[] = [];
+
+  if (contentType.includes("multipart/form-data")) {
+    if (!Buffer.isBuffer(req.body)) {
+      res.status(400).json({ error: "De aanvraag kon niet worden gelezen. Controleer de ingevulde gegevens." });
+      return;
+    }
+
+    let parsedForm: ReturnType<typeof parseMultipart>;
+    try {
+      parsedForm = parseMultipart(req.body, contentType);
+      body = JSON.parse(parsedForm.fields.payload ?? "");
+    } catch {
+      res.status(400).json({ error: "De aanvraag kon niet worden gelezen. Controleer de ingevulde gegevens." });
+      return;
+    }
+
+    const accepted = acceptUploads(parsedForm.files);
+    if (!accepted.ok) {
+      res.status(accepted.status).json({ error: accepted.error });
+      return;
+    }
+    uploads = accepted.uploads;
+  }
+
+  const parsed = CreateLeadBody.safeParse(body);
   if (!parsed.success) {
     res.status(400).json({ error: "Controleer de ingevulde gegevens en probeer het opnieuw." });
     return;
@@ -120,7 +148,7 @@ router.post("/leads", async (req, res): Promise<void> => {
   }
 
   try {
-    await sendLeadEmails(data, reference);
+    await sendLeadEmails(data, reference, uploads);
     await db
       .update(leadsTable)
       .set({ deliveryStatus: "delivered", notifiedAt: new Date() })

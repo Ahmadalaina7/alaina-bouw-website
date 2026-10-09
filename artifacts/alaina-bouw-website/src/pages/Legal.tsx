@@ -46,6 +46,7 @@ export function PrivacyPage() {
         <li>Naam, telefoonnummer en e-mailadres</li>
         <li>Plaats en eventueel postcode van het project</li>
         <li>Omschrijving van de klus, gewenste planning en eventuele budgetindicatie</li>
+        <li>Foto's of bestanden die u vrijwillig meestuurt, zodat we de klus kunnen inschatten</li>
         <li>Uw voorkeur voor de manier van contact</li>
       </ul>
       <p>Vermeld in de omschrijving geen bijzondere of onnodige persoonsgegevens.</p>
