@@ -102,10 +102,25 @@ export const projectPhotos: ProjectPhoto[] = [
   photo(18, 'Tuin voorbereiden voor bestrating', 'Zandbed en kruiwagen tijdens de voorbereiding van een tuinproject.', 'tuin', 768, 400),
   photo(19, 'Nieuw gazon in de achtertuin', 'Werk aan een nieuw gazon naast het terras van een woning.', 'tuin', 768, 500),
   photo(20, 'Nieuwe vloer in de woonkamer', 'Lichte houtlookvloer in een gerenoveerde woonkamer.', 'vloeren', 768, 1021),
+  photo(21, 'Ontwerp van een badkamer', 'Afgedrukt ontwerp van een badkamer met ligbad, douche en wastafel.', 'badkamer', 836, 1024),
+  photo(22, 'Badkamer tijdens de sloop', 'Open plafond en vrijgemaakte wanden tijdens de verbouwing van een badkamer.', 'badkamer', 789, 1024),
+  photo(23, 'Muur uitbreken', 'Uitgebroken tussenmuur tijdens de verbouwing.', 'badkamer', 778, 1024),
+  photo(24, 'Ruimte voorbereiden', 'Nieuwe blokkenwand en stuclaag voordat de afwerking begint.', 'wanden', 784, 1024),
+  photo(25, 'Wanden en nissen opbouwen', 'Badkamer in opbouw met gipsplaten, nissen en een geplaatst bad.', 'badkamer', 788, 1024),
+  photo(26, 'Plafond stukadoren', 'Stukadoor aan het werk aan een plafond.', 'wanden', 831, 1024),
+  photo(27, 'Tegels plaatsen', 'Badkamer tijdens het tegelwerk, met een nieuw bad en terrazzo.', 'badkamer', 853, 1024),
+  photo(28, 'Wandtegels zetten', 'Tegelzetter plaatst wandtegels.', 'badkamer', 768, 1024),
+  photo(29, 'Badkamer na afwerking', 'Afgewerkte badkamer met betonlook wanden, terrazzo en een ligbad.', 'badkamer', 821, 1024),
+  photo(30, 'Douche in de badkamer', 'Glazen douchewand in een afgewerkte badkamer.', 'badkamer', 790, 1024),
+  photo(31, 'Toilet met terrazzo', 'Afgewerkt toilet met terrazzo tegels en een houten wasmeubel.', 'badkamer', 839, 1024),
+  photo(32, 'Woonkamer na oplevering', 'Woonkamer met nieuwe vloer, haard en zitbank.', 'interieur', 767, 1024),
+  photo(33, 'Nieuw gazon achter de vlonder', 'Gazon en houten vlonder bij een woning.', 'tuin', 768, 1024),
 ];
 
 export const photoBySrcNumber = (n: number) =>
   projectPhotos.find((p) => p.src.endsWith(`project-${String(n).padStart(2, '0')}.jpg`))!;
+
+export const processPhotos = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33].map(photoBySrcNumber);
 
 export interface Service {
   slug: string;
@@ -126,7 +141,7 @@ export const services: Service[] = [
     intro:
       'Een strak gestuukte wand of plafond is de basis van elke mooie ruimte. Vertel ons welke wanden of plafonds u wilt laten aanpakken en welke afwerking u voor ogen heeft.',
     icon: Layers,
-    image: photoBySrcNumber(3),
+    image: photoBySrcNumber(26),
     examples: ['Wanden en plafonds stucen', 'Reparatie van scheuren en beschadigingen', 'Voorbereiding op schilder- of behangwerk', 'Afwerking in overleg'],
     requestHint: 'Beschrijf welke wanden of plafonds u wilt laten stukadoren en welke afwerking u wenst.',
   },
@@ -159,7 +174,7 @@ export const services: Service[] = [
     intro:
       'Een nieuwe vloer geeft uw woning direct een ander gevoel. Vertel om welke ruimtes het gaat en welk patroon u wilt, bijvoorbeeld recht of visgraat.',
     icon: Rows3,
-    image: photoBySrcNumber(20),
+    image: photoBySrcNumber(32),
     examples: ['Laminaat in woonkamer en slaapkamers', 'Rechte en visgraatpatronen', 'Overgangen naar andere vloeren', 'Plinten en afwerking'],
     requestHint: 'Beschrijf in welke ruimtes u laminaat wilt laten leggen en hoeveel m² het ongeveer is.',
   },
@@ -170,7 +185,7 @@ export const services: Service[] = [
     intro:
       'Wilt u uw tuin laten opknappen of onderhouden? Vertel wat u in de tuin wilt aanpakken of veranderen, dan bespreken we wat mogelijk is.',
     icon: Sprout,
-    image: photoBySrcNumber(16),
+    image: photoBySrcNumber(33),
     examples: ['Tuinonderhoud', 'Opknappen van de tuin', 'Snoeien en opruimen', 'Kleine aanpassingen in de tuin'],
     requestHint: 'Beschrijf welk tuinwerk u wilt laten uitvoeren en wat u belangrijk vindt.',
   },

@@ -1,11 +1,12 @@
 import { ArrowRight, Handshake, MapPin, MessageSquareText, Sparkles } from 'lucide-react';
 import { Link } from 'wouter';
+import { Gallery } from '@/components/Gallery';
 import { CtaBand, PageHero, Reveal } from '@/components/ui';
-import { areaPlaces, company, photoBySrcNumber, processSteps, services } from '@/config/site';
+import { areaPlaces, company, photoBySrcNumber, processPhotos, processSteps, services } from '@/config/site';
 import { usePageMeta } from '@/lib/seo';
 
 export function ProcessPage() {
-  usePageMeta('Werkwijze', 'Zo werkt Alaina Bouw Klusbedrijf: van aanvraag en kennismaking tot offerte en uitvoering.');
+  usePageMeta('Werkwijze', 'Zo werkt Alaina Bouw Klusbedrijf: van ontwerp en sloop tot stucwerk, tegelwerk en oplevering.');
   const tips = [
     'Beschrijf om welke ruimte(s) het gaat en hoe groot ze ongeveer zijn.',
     'Vermeld wat de huidige situatie is en wat u anders wilt.',
@@ -33,6 +34,16 @@ export function ProcessPage() {
               </Reveal>
             ))}
           </ol>
+        </div>
+      </section>
+      <section className="section !pt-0">
+        <div className="container-x">
+          <p className="eyebrow">Uitvoering</p>
+          <h2 className="mt-4 text-4xl leading-tight sm:text-5xl">Van ontwerp tot oplevering.</h2>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-stone">
+            Deze foto's laten de stappen van het werk zien: het ontwerp, de sloop, de opbouw, het stuc- en tegelwerk, en het resultaat.
+          </p>
+          <Gallery photos={processPhotos} className="mt-10" />
         </div>
       </section>
       <section className="border-y border-line bg-white py-16 lg:py-24">

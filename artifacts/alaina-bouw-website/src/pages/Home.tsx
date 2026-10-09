@@ -155,7 +155,7 @@ function Process() {
 }
 
 function ProjectsPreview() {
-  const picks = [15, 14, 10, 6, 13, 11].map(photoBySrcNumber);
+  const picks = [29, 32, 26, 22, 33, 28].map(photoBySrcNumber);
   return (
     <section className="section">
       <div className="container-x">
