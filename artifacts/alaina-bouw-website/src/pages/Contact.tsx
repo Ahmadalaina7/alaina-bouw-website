@@ -94,8 +94,8 @@ export function ContactPage() {
       eyebrow="Contact"
       title="Laten we kennismaken."
       text="Heeft u een vraag of een klus in gedachten? Vul het formulier in en we nemen zo snel mogelijk contact met u op."
-      metaTitle="Contact"
-      metaDescription="Neem contact op met Alaina Bouw Klusbedrijf. Stel uw vraag of beschrijf uw klus via het contactformulier."
+      metaTitle="Contact met het klusbedrijf"
+      metaDescription="Neem contact op met Alaina Bouw Klusbedrijf over stukadoorswerk, schilderwerk of een andere klus."
     />
   );
 }
@@ -106,8 +106,8 @@ export function QuotePage() {
       eyebrow="Offerte aanvragen"
       title="Vraag een offerte aan."
       text="Beschrijf uw klus in drie korte stappen. Hoe meer we weten, hoe beter we u een passend voorstel kunnen doen."
-      metaTitle="Offerte aanvragen"
-      metaDescription="Vraag vrijblijvend een offerte aan bij Alaina Bouw Klusbedrijf voor stukadoorswerk, schilderwerk, tegelwerk, laminaat of tuinwerk."
+      metaTitle="Offerte aanvragen voor uw klus"
+      metaDescription="Vraag vrijblijvend een offerte aan bij klusbedrijf Alaina Bouw voor stukadoorswerk, schilderwerk, tegelwerk, laminaat of tuinwerk."
     />
   );
 }

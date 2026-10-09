@@ -1,5 +1,7 @@
 RewriteEngine On
 RewriteBase /
+RewriteCond %{HTTP_HOST} ^www\.alainabouw\.nl$ [NC]
+RewriteRule ^ https://alainabouw.nl%{REQUEST_URI} [R=308,L]
 RewriteRule ^api/leads/?$ api/leads.php [L]
 RewriteRule ^index\.html$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f

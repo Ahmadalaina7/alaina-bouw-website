@@ -1,6 +1,8 @@
 {
   "name": "Alaina Bouw Klusbedrijf",
   "short_name": "Alaina Bouw",
+  "description": "Klusbedrijf voor stukadoorswerk, schilderwerk, tegelwerk, laminaat en tuinwerk.",
+  "lang": "nl",
   "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }],
   "theme_color": "#a90f14",
   "background_color": "#faf8f5",

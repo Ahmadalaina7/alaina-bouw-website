@@ -6,7 +6,7 @@ import { usePageMeta } from '@/lib/seo';
 import NotFound from './NotFound';
 
 export function ServicesPage() {
-  usePageMeta('Diensten', 'Stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in heel Nederland. Bekijk de diensten van Alaina Bouw Klusbedrijf.');
+  usePageMeta('Bouwdiensten van het klusbedrijf', 'Bouwdiensten van Alaina Bouw: stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in heel Nederland.');
   return (
     <>
       <PageHero

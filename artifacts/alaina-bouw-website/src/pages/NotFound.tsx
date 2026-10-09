@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { usePageMeta } from '@/lib/seo';
 
 export default function NotFound() {
-  usePageMeta('Pagina niet gevonden', 'Deze pagina bestaat niet of is verplaatst.');
+  usePageMeta('Pagina niet gevonden', 'Deze pagina bestaat niet of is verplaatst.', { noindex: true });
   return (
     <section className="container-x grid min-h-[65vh] place-items-center py-20 text-center">
       <div>

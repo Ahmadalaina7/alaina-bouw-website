@@ -8,7 +8,10 @@ import { usePageMeta } from '@/lib/seo';
 const heroMain = photoBySrcNumber(1);
 
 export default function Home() {
-  usePageMeta(null);
+  usePageMeta(
+    'Klusbedrijf voor bouwdiensten',
+    'Alaina Bouw is een klusbedrijf voor stukadoorswerk, schilderwerk, tegelwerk, laminaat leggen en tuinwerk in heel Nederland. Vraag vrijblijvend een offerte aan.',
+  );
   return (
     <>
       <Hero />
@@ -17,7 +20,7 @@ export default function Home() {
       <section className="section">
         <div className="container-x">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <SectionHeading eyebrow="Onze diensten" title="Alles voor een woning die weer klopt." text="Van strakke wanden tot een nieuwe vloer: vijf vakgebieden onder één dak. Staat uw klus er niet tussen? Vraag het ons gerust." />
+            <SectionHeading eyebrow="Bouwdiensten" title="Alles voor een woning die weer klopt." text="Van strakke wanden tot een nieuwe vloer: de bouwdiensten van dit klusbedrijf. Staat uw klus er niet tussen? Vraag het ons gerust." />
             <Link href="/diensten" className="link-arrow shrink-0">Alle diensten <ArrowRight className="size-4" /></Link>
           </div>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -67,7 +70,7 @@ function Hero() {
             Van binnen tot buiten, <span className="text-brand">vakkundig geregeld.</span>
           </h1>
           <p className="mt-5 max-w-lg text-base leading-relaxed text-stone sm:text-lg">
-            Van stukadoorswerk en schilderwerk tot tuinwerk, tegelwerk en laminaat leggen. Vertel wat u wilt laten doen; beschikbaarheid stemmen we per aanvraag af.
+            Alaina Bouw is een klusbedrijf voor bouwdiensten: stukadoorswerk, schilderwerk, tuinwerk, tegelwerk en laminaat leggen. Vertel wat u wilt laten doen.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link href="/offerte-aanvragen" className="btn btn-primary !min-h-12 !rounded-none px-5 text-sm">
