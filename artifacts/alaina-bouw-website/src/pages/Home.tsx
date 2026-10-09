@@ -92,9 +92,9 @@ function Hero() {
           <div className="relative aspect-[1.08] overflow-hidden bg-sand shadow-soft sm:aspect-[1.18]">
             <img src={heroMain.src} alt={heroMain.alt} width={heroMain.width} height={heroMain.height} fetchPriority="high" className="size-full object-cover object-center" />
           </div>
-          <div className="absolute left-4 top-4 max-w-[11rem] bg-white px-4 py-3 shadow-soft sm:left-6 sm:top-6 sm:px-5 sm:py-4">
+          <div className="absolute left-4 top-16 max-w-[16rem] bg-white px-4 py-3 shadow-soft sm:left-6 sm:top-20 sm:max-w-[18rem] sm:px-5 sm:py-4">
             <p className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-brand">Eerst luisteren</p>
-            <p className="mt-2 text-base leading-snug tracking-tight text-ink sm:text-lg">Wat wilt u anders zien?</p>
+            <p className="mt-2 text-base leading-snug tracking-tight text-ink sm:text-lg">We beginnen bij uw wensen.</p>
           </div>
           <div className="absolute bottom-0 right-0 w-[38%] min-w-[9rem] bg-brand px-4 py-4 text-white sm:px-5 sm:py-5">
             <p className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-white/80">Uw woning</p>
